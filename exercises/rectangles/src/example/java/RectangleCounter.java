@@ -15,13 +15,13 @@ final class RectangleCounter {
 
     private static final class Grid {
 
-        private enum Entry {
+        private enum Element {
             CORNER,
             HLINE,
             VLINE,
             SPACE;
 
-            private static Entry fromChar(final char rawGridEntry) {
+            private static Element fromChar(final char rawGridEntry) {
                 switch (rawGridEntry) {
                     case '+': return CORNER;
                     case '-': return HLINE;
@@ -30,19 +30,27 @@ final class RectangleCounter {
                     default:  throw new IllegalStateException("Grid entry " + rawGridEntry + " not recognized.");
                 }
             }
+
+            private boolean isHorizontalConnector() {
+                return this == CORNER || this == HLINE;
+            }
+
+            private boolean isVerticalConnector() {
+                return this == CORNER || this == VLINE;
+            }
         }
 
         private int nRows, nCols;
-        private final Entry[][] entries;
+        private final Element[][] entries;
 
         private Grid(final int nRows, final int nCols, final String[] rawGrid) {
             this.nRows = nRows;
             this.nCols = nCols;
-            this.entries = new Entry[nRows][nCols];
+            this.entries = new Element[nRows][nCols];
 
             for (int nRow = 0; nRow < nRows; nRow++) {
                 for (int nCol = 0; nCol < nCols; nCol++) {
-                    entries[nRow][nCol] = Entry.fromChar(rawGrid[nRow].charAt(nCol));
+                    entries[nRow][nCol] = Element.fromChar(rawGrid[nRow].charAt(nCol));
                 }
             }
         }
@@ -76,10 +84,10 @@ final class RectangleCounter {
                 final int leftCol,
                 final int rightCol) {
 
-            return entries[topRow][leftCol].equals(Entry.CORNER)
-                    && entries[topRow][rightCol].equals(Entry.CORNER)
-                    && entries[bottomRow][leftCol].equals(Entry.CORNER)
-                    && entries[bottomRow][rightCol].equals(Entry.CORNER)
+            return entries[topRow][leftCol].equals(Element.CORNER)
+                    && entries[topRow][rightCol].equals(Element.CORNER)
+                    && entries[bottomRow][leftCol].equals(Element.CORNER)
+                    && entries[bottomRow][rightCol].equals(Element.CORNER)
                     && isHorizontalLineSegment(topRow, leftCol, rightCol)
                     && isHorizontalLineSegment(bottomRow, leftCol, rightCol)
                     && isVerticalLineSegment(leftCol, topRow, bottomRow)
@@ -88,20 +96,20 @@ final class RectangleCounter {
 
         private boolean isHorizontalLineSegment(final int row, final int leftCol, final int rightCol) {
             return stream(copyOfRange(getRow(row), leftCol, rightCol))
-                    .allMatch(entry -> entry.equals(Entry.HLINE) || entry.equals(Entry.CORNER));
+                    .allMatch(Element::isHorizontalConnector);
         }
 
         private boolean isVerticalLineSegment(final int col, final int topRow, final int bottomRow) {
             return stream(copyOfRange(getCol(col), topRow, bottomRow))
-                    .allMatch(entry -> entry.equals(Entry.VLINE) || entry.equals(Entry.CORNER));
+                    .allMatch(Element::isVerticalConnector);
         }
 
-        private Entry[] getRow(final int number) {
+        private Element[] getRow(final int number) {
             return entries[number];
         }
 
-        private Entry[] getCol(final int number) {
-            final Entry[] result = new Entry[nRows];
+        private Element[] getCol(final int number) {
+            final Element[] result = new Element[nRows];
 
             for (int nRow = 0; nRow < nRows; nRow++) {
                 result[nRow] = entries[nRow][number];
